@@ -26,6 +26,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
     volumes:
       - ./backend:/app
+      - /home/ubuntu/secrets/ebay-reconciliation-dev-firebase-admin.json:/run/secrets/firebase-admin.json:ro
     ports:
       - "8000:8000"
     depends_on:

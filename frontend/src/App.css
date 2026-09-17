@@ -1680,3 +1680,159 @@ tbody tr:last-child td {
 }
 
 
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-user-email {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.header-user-button {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-user-button:hover {
+  background: #f8fafc;
+}
+
+.header-user-button.header-logout {
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.header-user-button.header-logout:hover {
+  background: #fef2f2;
+}
+
+@media (max-width: 800px) {
+  .header {
+    gap: 16px;
+  }
+
+  .header-user {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .header-user-email {
+    display: none;
+  }
+}
+
+/* Ajustes visuales de filtros de payouts */
+.filters form {
+  align-items: flex-end;
+}
+
+.filters .filter-group:first-child {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.filters .inactive-filter {
+  margin-top: 8px;
+}
+
+/* Cuenta inactiva: rojo para diferenciarla */
+.account-card-actions .inactive-button {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.account-card-actions .inactive-button:hover {
+  background: #fee2e2;
+}
+
+/* En pantallas pequeñas mantenemos el layout vertical */
+@media (max-width: 800px) {
+  .filters form {
+    align-items: stretch;
+  }
+}
+
+.account-status.inactive {
+  color: #dc2626;
+}
+
+/* Layout de filtros de payouts */
+.filters form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.filters .filter-group:first-child {
+  min-width: 220px;
+}
+
+.filters .inactive-filter {
+  margin-top: 8px;
+}
+
+.filters .filter-button {
+  align-self: flex-end;
+  margin-bottom: 0;
+}
+
+@media (max-width: 800px) {
+  .filters form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters .filter-group:first-child {
+    min-width: 0;
+  }
+
+  .filters .filter-button {
+    width: 100%;
+  }
+}
+
+/* Alineación de los controles principales de payouts */
+.filters form {
+  align-items: flex-start;
+}
+
+.filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.filters .filter-group > label {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.filters .inactive-filter {
+  margin-top: 8px;
+}
+
+.filters .filter-button {
+  align-self: flex-start;
+  margin-top: 26px;
+}

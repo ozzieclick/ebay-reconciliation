@@ -6,7 +6,9 @@ from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.firebase_auth import verify_request
 
 from app.database import SessionLocal
 from app.ebay_oauth import build_authorization_url, exchange_code_for_tokens, get_ebay_user
@@ -30,7 +32,37 @@ async def lifespan(app: FastAPI):
             pass
 
 
+
+class FirebaseAuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        path = request.url.path
+
+        public_paths = {
+            "/health",
+            "/api/status",
+            "/api/ebay/auth/callback",
+        }
+
+        if path.startswith("/api/") and path not in public_paths:
+            try:
+                verify_request(request)
+            except HTTPException as exc:
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content={"detail": exc.detail},
+                )
+            except Exception:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Invalid authentication credentials"},
+                )
+
+        return await call_next(request)
+
+
 app = FastAPI(title="eBay Reconciliation API", lifespan=lifespan)
+
+app.add_middleware(FirebaseAuthMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -410,10 +442,9 @@ def ebay_auth_start(account_id: int = Query(...)):
         state = secrets.token_urlsafe(32)
         oauth_states[state] = account.id
 
-        return RedirectResponse(
-            url=build_authorization_url(state),
-            status_code=302,
-        )
+        return {
+            "authorization_url": build_authorization_url(state),
+        }
     finally:
         db.close()
 
