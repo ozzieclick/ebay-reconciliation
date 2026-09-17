@@ -5,6 +5,10 @@ import App from './App'
 import Login from './Login'
 
 function AppRoot() {
+  if (window.location.pathname === '/privacy') {
+    return <App />
+  }
+
   const [user, setUser] = useState(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
 

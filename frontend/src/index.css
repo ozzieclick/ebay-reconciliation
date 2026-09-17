@@ -317,3 +317,67 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Privacy Policy */
+.privacy-policy-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 48px 20px;
+  background: #f5f7fa;
+  color: #1f2937;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.privacy-policy-card {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 44px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+}
+
+.privacy-policy-card h1 {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.privacy-policy-card h2 {
+  margin: 28px 0 10px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.privacy-policy-card p {
+  margin: 0 0 14px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #4b5563;
+}
+
+.privacy-policy-card .privacy-updated {
+  margin-bottom: 30px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+@media (max-width: 600px) {
+  .privacy-policy-page {
+    padding: 24px 14px;
+  }
+
+  .privacy-policy-card {
+    padding: 28px 22px;
+    border-radius: 10px;
+  }
+
+  .privacy-policy-card h1 {
+    font-size: 26px;
+  }
+}

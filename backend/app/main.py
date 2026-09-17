@@ -1,6 +1,8 @@
 import os
 import secrets
 import asyncio
+import hashlib
+import os
 from datetime import datetime, timedelta, timezone
 
 from fastapi import FastAPI, HTTPException, Query
@@ -41,6 +43,7 @@ class FirebaseAuthMiddleware(BaseHTTPMiddleware):
             "/health",
             "/api/status",
             "/api/ebay/auth/callback",
+            "/api/ebay/notifications/account-deletion",
         }
 
         if path.startswith("/api/") and path not in public_paths:
@@ -67,7 +70,10 @@ app.add_middleware(FirebaseAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://reconcile-ebay.web.app",
+        os.environ.get(
+            "FRONTEND_URL",
+            "https://reconcile-ebay.web.app",
+        ),
         "http://100.121.44.6:5173",
     ],
     allow_credentials=True,
@@ -77,6 +83,36 @@ app.add_middleware(
 
 
 oauth_states: dict[str, int] = {}
+
+
+@app.get("/api/ebay/notifications/account-deletion")
+def ebay_account_deletion_challenge(challenge_code: str = Query(...)):
+    verification_token = os.environ.get("EBAY_ACCOUNT_DELETION_VERIFICATION_TOKEN")
+    endpoint = os.environ.get(
+        "EBAY_ACCOUNT_DELETION_ENDPOINT",
+        "https://instance-20240820-0114.tail3c8a81.ts.net/prod/api/ebay/notifications/account-deletion",
+    )
+
+    if not verification_token:
+        raise HTTPException(
+            status_code=503,
+            detail="eBay account deletion verification token not configured",
+        )
+
+    response_hash = hashlib.sha256(
+        (
+            challenge_code
+            + verification_token
+            + endpoint
+        ).encode("utf-8")
+    ).hexdigest()
+
+    return {"challengeResponse": response_hash}
+
+
+@app.post("/api/ebay/notifications/account-deletion")
+async def ebay_account_deletion_notification():
+    return {"status": "ok"}
 
 
 @app.get("/health")

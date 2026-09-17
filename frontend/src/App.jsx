@@ -52,7 +52,72 @@ function getErrorMessage(error, fallback) {
   return error?.message || fallback
 }
 
+
+function PrivacyPolicyPage() {
+  return (
+    <div className="privacy-policy-page">
+      <div className="privacy-policy-card">
+        <h1>Privacy Policy</h1>
+
+        <p>
+          This Privacy Policy describes how eBay Reconciliation handles
+          information when you connect an eBay account to the application.
+        </p>
+
+        <h2>Information We Access</h2>
+        <p>
+          When you authorize an eBay account, the application may access
+          information provided by eBay APIs, including account information
+          and financial information such as payout data.
+        </p>
+
+        <h2>How We Use Information</h2>
+        <p>
+          Information accessed from eBay is used solely to provide the
+          reconciliation and account-management features of this application.
+        </p>
+
+        <h2>Data Storage</h2>
+        <p>
+          Information obtained through eBay APIs may be stored securely on
+          our server for the operation of the application and reconciliation
+          purposes.
+        </p>
+
+        <h2>eBay Account Connection</h2>
+        <p>
+          Connecting an eBay account requires authorization through eBay.
+          The application does not receive or store your eBay password.
+        </p>
+
+        <h2>Account Closure and Data Deletion</h2>
+        <p>
+          If eBay notifies us that an associated eBay account has been closed
+          or deleted, the application will process the notification in
+          accordance with applicable eBay requirements and applicable data
+          protection obligations.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          For questions about this Privacy Policy or the handling of data,
+          please contact the administrator of this application.
+        </p>
+
+        <p className="privacy-policy-updated">
+          Last updated: September 2026
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function App() {
+  if (window.location.pathname === "/privacy") {
+    return <PrivacyPolicyPage />
+  }
+
+
   const [accounts, setAccounts] = useState([])
   const [syncStatuses, setSyncStatuses] = useState({})
   const [accountId, setAccountId] = useState('')
