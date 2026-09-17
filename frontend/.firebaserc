@@ -1,5 +1,9 @@
 {
   "projects": {
-    "default": "reconcile-ebay"
-  }
+    "default": "reconcile-ebay",
+    "dev": "reconcile-ebay",
+    "prod": "ebay-reconciliation-prod"
+  },
+  "targets": {},
+  "etags": {}
 }

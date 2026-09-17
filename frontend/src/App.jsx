@@ -1,7 +1,28 @@
 import { useEffect, useState } from 'react'
+import { getIdToken } from 'firebase/auth'
+import { auth } from './firebase'
 import './App.css'
 
-const API_BASE = 'https://instance-20240820-0114.tail3c8a81.ts.net'
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+
+
+async function apiFetch(path, options = {}) {
+  const user = auth.currentUser
+
+  if (!user) {
+    throw new Error('Usuario no autenticado')
+  }
+
+  const token = await getIdToken(user)
+
+  const headers = new Headers(options.headers || {})
+  headers.set('Authorization', `Bearer ${token}`)
+
+  return fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+  })
+}
 
 function getErrorMessage(error, fallback) {
   if (error instanceof TypeError) {
@@ -63,7 +84,7 @@ function App() {
   })
 
   async function loadAccounts() {
-    const response = await fetch(`${API_BASE}/api/ebay/accounts`)
+    const response = await apiFetch(`/api/ebay/accounts`)
 
     if (!response.ok) {
       const data = await response.json().catch(() => null)
@@ -104,8 +125,8 @@ function App() {
           offset: '0',
         })
 
-        const response = await fetch(
-          `${API_BASE}/api/ebay/accounts/${account.id}/payouts?${params}`,
+        const response = await apiFetch(
+          `/api/ebay/accounts/${account.id}/payouts?${params}`,
         )
 
         if (!response.ok) {
@@ -154,8 +175,8 @@ function App() {
 
     const results = await Promise.all(
       accountList.map(async (account) => {
-        const response = await fetch(
-          `${API_BASE}/api/ebay/accounts/${account.id}/sync/status`,
+        const response = await apiFetch(
+          `/api/ebay/accounts/${account.id}/sync/status`,
         )
 
         if (!response.ok) {
@@ -210,8 +231,8 @@ function App() {
       setSyncingAccountId(accountIdToSync)
       setError('')
 
-      const response = await fetch(
-        `${API_BASE}/api/ebay/accounts/${accountIdToSync}/sync/payouts`,
+      const response = await apiFetch(
+        `/api/ebay/accounts/${accountIdToSync}/sync/payouts`,
         {
           method: 'POST',
         },
@@ -276,8 +297,8 @@ function App() {
             params.set('date_to', `${dateTo}T23:59:59Z`)
           }
 
-          const response = await fetch(
-            `${API_BASE}/api/ebay/accounts/${id}/payouts?${params}`,
+          const response = await apiFetch(
+            `/api/ebay/accounts/${id}/payouts?${params}`,
           )
 
           if (!response.ok) {
@@ -384,7 +405,7 @@ function App() {
       setCreatingAccount(true)
       setError('')
 
-      const response = await fetch(`${API_BASE}/api/ebay/accounts`, {
+      const response = await apiFetch(`/api/ebay/accounts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -434,8 +455,8 @@ function App() {
       setSavingAccount(true)
       setError('')
 
-      const response = await fetch(
-        `${API_BASE}/api/ebay/accounts/${accountIdToUpdate}`,
+      const response = await apiFetch(
+        `/api/ebay/accounts/${accountIdToUpdate}`,
         {
           method: 'PATCH',
           headers: {
@@ -482,8 +503,8 @@ function App() {
     try {
       setError('')
 
-      const response = await fetch(
-        `${API_BASE}/api/ebay/accounts/${account.id}`,
+      const response = await apiFetch(
+        `/api/ebay/accounts/${account.id}`,
         {
           method: 'PATCH',
           headers: {
@@ -1198,7 +1219,11 @@ function App() {
                         <h2>{account.name}</h2>
                       </div>
 
-                      <span className="account-status">
+                      <span
+                        className={`account-status ${
+                          account.status === 'inactive' ? 'inactive' : ''
+                        }`}
+                      >
                         {account.status}
                       </span>
                     </div>
@@ -1236,8 +1261,31 @@ function App() {
                                 ? 'connected-button'
                                 : 'connect-button'
                           }
-                          onClick={() => {
-                            window.location.href = `${API_BASE}/api/ebay/auth/start?account_id=${account.id}`
+                          onClick={async () => {
+                            try {
+                              const response = await apiFetch(
+                                `/api/ebay/auth/start?account_id=${account.id}`,
+                              )
+
+                              if (!response.ok) {
+                                throw new Error(`API error: ${response.status}`)
+                              }
+
+                              const data = await response.json()
+
+                              if (!data.authorization_url) {
+                                throw new Error('No se recibió la URL de autorización de eBay')
+                              }
+
+                              window.location.href = data.authorization_url
+                            } catch (err) {
+                              setError(
+                                getErrorMessage(
+                                  err,
+                                  'No se pudo iniciar la autorización de eBay',
+                                ),
+                              )
+                            }
                           }}
                         >
                           {account.oauth_status === 'refresh_failed'
