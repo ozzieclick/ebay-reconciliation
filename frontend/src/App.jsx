@@ -113,13 +113,10 @@ function PrivacyPolicyPage() {
 }
 
 function App() {
-<<<<<<< HEAD
   if (window.location.pathname === "/privacy") {
     return <PrivacyPolicyPage />
   }
 
-
-=======
   async function handleLogout() {
     try {
       await signOut(auth)
@@ -128,9 +125,6 @@ function App() {
     }
   }
 
-
-
->>>>>>> origin/develop
   const [accounts, setAccounts] = useState([])
   const [syncStatuses, setSyncStatuses] = useState({})
   const [accountId, setAccountId] = useState('')
