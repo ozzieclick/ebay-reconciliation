@@ -5,7 +5,7 @@ import hashlib
 import os
 from datetime import datetime, timedelta, timezone
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -15,7 +15,8 @@ from app.firebase_auth import verify_request
 from app.database import SessionLocal
 from app.ebay_oauth import build_authorization_url, exchange_code_for_tokens, get_ebay_user
 from app.payout_sync import sync_payouts
-from app.models import EbayAccount, Payout
+from app.models import EbayAccount, Payout, PushSubscription
+from app.notifications import send_push_notification
 from app.models.sync_run import SyncRun
 from app.models.sync_state import SyncState
 from app.scheduler import scheduler_loop
@@ -248,6 +249,57 @@ def ebay_sync_status(account_id: int):
         }
     finally:
         db.close()
+
+
+class PushSubscriptionCreate(BaseModel):
+    token: str
+    platform: str = "web"
+
+
+@app.post("/api/push/subscribe")
+def subscribe_push(request: Request, payload: PushSubscriptionCreate):
+    user = verify_request(request)
+
+    token = payload.token.strip()
+    platform = payload.platform.strip() or "web"
+
+    if not token:
+        raise HTTPException(
+            status_code=400,
+            detail="Push token cannot be empty",
+        )
+
+    db = SessionLocal()
+
+    try:
+        subscription = (
+            db.query(PushSubscription)
+            .filter(PushSubscription.token == token)
+            .one_or_none()
+        )
+
+        if subscription:
+            subscription.user_id = user["uid"]
+            subscription.platform = platform
+            subscription.active = True
+        else:
+            subscription = PushSubscription(
+                user_id=user["uid"],
+                token=token,
+                platform=platform,
+                active=True,
+            )
+            db.add(subscription)
+
+        db.commit()
+
+        return {
+            "status": "ok",
+            "subscription_id": subscription.id,
+        }
+    finally:
+        db.close()
+
 
 
 @app.get("/api/ebay/accounts")

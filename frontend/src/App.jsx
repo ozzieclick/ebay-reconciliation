@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getIdToken } from 'firebase/auth'
+import { getIdToken, signOut } from 'firebase/auth'
 import { auth } from './firebase'
 import './App.css'
 
@@ -113,11 +113,24 @@ function PrivacyPolicyPage() {
 }
 
 function App() {
+<<<<<<< HEAD
   if (window.location.pathname === "/privacy") {
     return <PrivacyPolicyPage />
   }
 
 
+=======
+  async function handleLogout() {
+    try {
+      await signOut(auth)
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
+
+
+
+>>>>>>> origin/develop
   const [accounts, setAccounts] = useState([])
   const [syncStatuses, setSyncStatuses] = useState({})
   const [accountId, setAccountId] = useState('')
@@ -162,7 +175,13 @@ function App() {
     setAccounts(nextAccounts)
 
     if (!accountId && nextAccounts.length > 0) {
-      setAccountId(String(nextAccounts[0].id))
+      const firstActiveAccount = nextAccounts.find(
+        (account) => account.status === 'active',
+      )
+
+      if (firstActiveAccount) {
+        setAccountId(String(firstActiveAccount.id))
+      }
     }
 
     return nextAccounts
@@ -338,7 +357,12 @@ function App() {
 
       const accountIds =
         selectedAccountId === 'all'
-          ? accounts.map((account) => account.id)
+          ? accounts
+              .filter(
+                (account) =>
+                  includeInactiveAccounts || account.status === 'active',
+              )
+              .map((account) => account.id)
           : [selectedAccountId]
 
       if (accountIds.length === 0) {
@@ -426,10 +450,16 @@ function App() {
         await loadSyncStatuses(nextAccounts)
 
         if (nextAccounts.length > 0) {
+          const firstActiveAccount = nextAccounts.find(
+            (account) => account.status === 'active',
+          )
+
           const selectedAccountId =
             oauthStatus === 'success' && oauthAccountId
               ? oauthAccountId
-              : String(nextAccounts[0].id)
+              : firstActiveAccount
+                ? String(firstActiveAccount.id)
+                : ''
 
           setAccountId(selectedAccountId)
           await loadPayouts(selectedAccountId)
@@ -669,6 +699,13 @@ function App() {
           </p>
         </div>
 
+        <button
+          type="button"
+          className="header-user-button header-logout"
+          onClick={handleLogout}
+        >
+          Cerrar sesión
+        </button>
       </header>
 
       <nav className="navigation">
@@ -1392,6 +1429,7 @@ function App() {
               <p className="message">No hay cuentas activas.</p>
             )}
           </div>
+
         </section>
           )}
         </>

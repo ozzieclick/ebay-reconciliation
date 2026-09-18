@@ -4,6 +4,9 @@ from decimal import Decimal
 from app.database import SessionLocal
 from app.ebay_oauth import get_payouts
 from app.models.payout import Payout
+from app.models.ebay_account import EbayAccount
+from app.models.push_subscription import PushSubscription
+from app.notifications import send_push_notification
 from app.models.sync_run import SyncRun
 from app.models.sync_state import SyncState
 
@@ -88,6 +91,7 @@ async def sync_payouts(account_id: int) -> dict:
     total_found = 0
     total_created = 0
     total_updated = 0
+    new_payouts = []
     offset = 0
 
     try:
@@ -136,6 +140,7 @@ async def sync_payouts(account_id: int) -> dict:
                         **values,
                     )
                     db.add(payout)
+                    new_payouts.append(payout_data)
                     total_created += 1
                 else:
                     changed = False
@@ -171,6 +176,69 @@ async def sync_payouts(account_id: int) -> dict:
         sync_state.last_error = None
 
         db.commit()
+
+        if new_payouts:
+            account = db.get(EbayAccount, account_id)
+            subscriptions = (
+                db.query(PushSubscription)
+                .filter(PushSubscription.active.is_(True))
+                .all()
+            )
+
+            total_amounts = {}
+            for payout_data in new_payouts:
+                amount = payout_data.get("amount") or {}
+                currency = amount.get("currency") or ""
+                value = Decimal(str(amount.get("value", "0")))
+                total_amounts[currency] = total_amounts.get(currency, Decimal("0")) + value
+
+            if len(new_payouts) == 1:
+                payout_data = new_payouts[0]
+                amount = payout_data.get("amount") or {}
+                value = Decimal(str(amount.get("value", "0")))
+                currency = amount.get("currency") or ""
+
+                instrument = payout_data.get("payoutInstrument") or {}
+                nickname = instrument.get("nickname")
+                last_four = instrument.get("accountLastFourDigits")
+
+                if nickname and last_four:
+                    instrument_text = f"{nickname} ••••{last_four}"
+                elif nickname:
+                    instrument_text = nickname
+                elif last_four:
+                    instrument_text = f"••••{last_four}"
+                else:
+                    instrument_text = "No especificado"
+
+                title = "Nuevo payout de eBay"
+                body = (
+                    f"Cuenta: {account.name if account else account_id}\n"
+                    f"Instrumento: {instrument_text}\n"
+                    f"Monto: {value:.2f} {currency}"
+                )
+            else:
+                total_text = ", ".join(
+                    f"{value:.2f} {currency}"
+                    for currency, value in total_amounts.items()
+                )
+
+                title = f"{len(new_payouts)} nuevos payouts de eBay"
+                body = (
+                    f"Cuenta: {account.name if account else account_id}\n"
+                    f"Total: {total_text}"
+                )
+
+            for subscription in subscriptions:
+                try:
+                    send_push_notification(
+                        token=subscription.token,
+                        title=title,
+                        body=body,
+                        data={"type": "new_payout"},
+                    )
+                except Exception:
+                    pass
 
         return {
             "status": "success",
