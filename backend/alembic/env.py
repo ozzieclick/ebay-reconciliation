@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.database import Base
-from app.models import EbayAccount, Payout, SyncRun, SyncState  # noqa: F401
+from app.models import EbayAccount, Payout, PushSubscription, SyncRun, SyncState  # noqa: F401
 
 
 config = context.config
